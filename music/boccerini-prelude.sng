@@ -1,0 +1,27 @@
+// pickup to measure 1
+si, d5, sl
+si, c#5, sl
+si, d5, sl
+si, e5
+// measure 1
+eig, d5, st
+qua, d4
+qua, f#4, sl
+eig, a5
+// measure 2
+eig, a5, sl
+eig, g4
+qua, g4
+six, g4, sl
+six, f#4, sl
+six, g4, sl
+six, a5
+// measure 3
+eig, g4, st
+qua, a4
+qua, e4, sl
+eig, g4
+// measure 4
+eig, g4, sl
+eig, f#4
+qua, f#4
