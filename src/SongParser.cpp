@@ -67,7 +67,7 @@ note_duration_t SongParser::parse_duration(RememberingSubstring str) {
 	} catch (SongParser::ParseException const&) {
 		size_t const space_pos = str.data.find_first_of(' ');
 		if (space_pos != std::string_view::npos && std::string{ "dotted" }.starts_with(std::string_view{ str.data.begin(), space_pos })) {
-			return 1.5 * parse_duration_string(RememberingSubstring{ str, space_pos + 1 });
+			return 1.5 * parse_duration_string(str.substr(space_pos + 1));
 		} else {
 			return parse_duration_string(str);
 		}
@@ -78,7 +78,7 @@ void SongParser::parse_pitches(RememberingSubstring str, std::vector<note_note_t
 	size_t tokenize_start = 0, tokenize_end;
 	while (true) {
 		tokenize_end = str.data.find_first_of(' ', tokenize_start);
-		pitches.emplace_back(parse_pitch(RememberingSubstring{ str, tokenize_start, tokenize_end }));
+		pitches.emplace_back(parse_pitch(str.substr(tokenize_start, tokenize_end)));
 		if (tokenize_end == RememberingSubstring::npos) {
 			break;
 		}
@@ -114,7 +114,7 @@ note_note_t SongParser::parse_pitch(RememberingSubstring str) {
 	} else {
 		number_start = 1;
 	}
-	signed char const octave = parse_signed_char(RememberingSubstring{ str, number_start });
+	signed char const octave = parse_signed_char(str.substr(number_start));
 	return pitch + (signed short)octave * NOTES_IN_OCTAVE;
 }
 
@@ -132,15 +132,27 @@ Articulation SongParser::parse_articulation(RememberingSubstring str) {
 	}
 }
 
+void SongParser::parse_directive(RememberingSubstring str) {
+	size_t const space_pos = str.data.find_first_of(' ');
+	RememberingSubstring directive_name = str.substr(0, space_pos);
+	if (std::string{ "tempo" }.starts_with(directive_name.data)) {
+		assert(str.data.size() >= space_pos + 1);
+		tempo = parse_double(str.substr(space_pos + 1));
+	} else {
+		throw SongParser::ParseException{ "Unrecognized percent-directive", directive_name };
+	}
+}
+
 std::unique_ptr<Playable> SongParser::next() {
-	std::string line;
-	std::getline(input_file, line);
+	std::string line_;
+	std::getline(input_file, line_);
 	if (!input_file.good()) {
 		return nullptr;
 	}
 	file_position.line++;
-	std::transform(line.begin(), line.end(), line.begin(), util::tolower);
+	std::transform(line_.begin(), line_.end(), line_.begin(), util::tolower);
 	size_t tokenize_start = 0, tokenize_end;
+	RememberingSubstring line = RememberingSubstring::whole_string(line_);
 
 	try {
 		struct {
@@ -151,24 +163,24 @@ std::unique_ptr<Playable> SongParser::next() {
 		} note_data;
 
 		// skip empty and comment lines
-		if (line.starts_with("//") || line.size() == 0) {
+		if (line.data.size() == 0 || line.data.starts_with("//")) {
 			return next();
 		}
 
 		// parse duration
-		tokenize_end = line.find_first_of(',', tokenize_start);
-		if (tokenize_end == std::string::npos || line.size() < tokenize_end + 2) {
-			throw SongParser::ParseException{ "Garbage line: ended before duration", RememberingSubstring::whole_string(line) };
+		tokenize_end = line.data.find_first_of(',', tokenize_start);
+		if (tokenize_end == std::string::npos || line.data.size() < tokenize_end + 2) {
+			throw SongParser::ParseException{ "Garbage line: ended before duration", line };
 		}
-		note_data.duration = parse_duration(RememberingSubstring{ line, tokenize_start, tokenize_end });
+		note_data.duration = parse_duration(line.substr(tokenize_start, tokenize_end));
 
 		// parse notes or rest
 		tokenize_start = tokenize_end + 2;  // skip space
-		tokenize_end = line.find_first_of(',', tokenize_start);
+		tokenize_end = line.data.find_first_of(',', tokenize_start);
 		if (tokenize_end == std::string::npos) {
-			tokenize_end = line.size();
+			tokenize_end = line.data.size();
 		}
-		if (auto const view = RememberingSubstring{ line, tokenize_start, tokenize_end }; view.data == "rest") {
+		if (auto const view = line.substr(tokenize_start, tokenize_end); view.data == "rest") {
 			return std::make_unique<Rest>(note_data.duration);
 		} else {
 			parse_pitches(view, note_data.pitches);
@@ -176,26 +188,26 @@ std::unique_ptr<Playable> SongParser::next() {
 		assert(note_data.pitches.size() >= 1);
 
 		// articulation
-		if (line.size() == tokenize_end) {
+		if (line.data.size() == tokenize_end) {
 			goto return_value;
 		}
 		tokenize_start = tokenize_end + 2;
-		tokenize_end = line.find_first_of(',', tokenize_start);
+		tokenize_end = line.data.find_first_of(',', tokenize_start);
 		if (tokenize_end == std::string::npos) {
-			tokenize_end = line.size();
+			tokenize_end = line.data.size();
 		}
-		note_data.articulation = parse_articulation(RememberingSubstring{ line, tokenize_start, tokenize_end });
+		note_data.articulation = parse_articulation(line.substr(tokenize_start, tokenize_end));
 
 		// velocity
-		if (line.size() == tokenize_end) {
+		if (line.data.size() == tokenize_end) {
 			goto return_value;
 		}
 		tokenize_start = tokenize_end + 2;
-		tokenize_end = line.find_first_of(',', tokenize_start);
+		tokenize_end = line.data.find_first_of(',', tokenize_start);
 		if (tokenize_end != std::string::npos) {
-			throw SongParser::ParseException{ "Line has too many elements", RememberingSubstring::whole_string(line) };
+			throw SongParser::ParseException{ "Line has too many elements", line };
 		}
-		note_data.velocity = parse_double(RememberingSubstring{ line, tokenize_start });
+		note_data.velocity = parse_double(line.substr(tokenize_start));
 
 return_value:;
 		if (note_data.pitches.size() > 1) {

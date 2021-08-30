@@ -18,6 +18,10 @@ public:
 		static RememberingSubstring whole_string(std::string const& superstring) {
 			return RememberingSubstring{ superstring, 0, superstring.size() };
 		}
+		// NB this does not have the same signature as the homonymous string_view method
+		RememberingSubstring substr(size_t start, size_t end = npos) {
+			return RememberingSubstring{ *this, start, end };
+		}
 		RememberingSubstring(std::string const& superstring, size_t start, size_t end = npos);
 		RememberingSubstring(RememberingSubstring const& superstring, size_t start, size_t end = npos);
 	};
