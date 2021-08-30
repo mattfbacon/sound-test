@@ -16,7 +16,7 @@ public:
 		size_t const line_offset;
 		static constexpr auto npos = std::string_view::npos;
 		static RememberingSubstring whole_string(std::string const& superstring) {
-			return RememberingSubstring{ superstring, 0 };
+			return RememberingSubstring{ superstring, 0, superstring.size() };
 		}
 		RememberingSubstring(std::string const& superstring, size_t start, size_t end = npos);
 		RememberingSubstring(RememberingSubstring const& superstring, size_t start, size_t end = npos);
