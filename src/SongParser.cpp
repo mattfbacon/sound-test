@@ -23,8 +23,6 @@ SongParser::SongParser(std::string const& filename) : input_file{ filename } {
 	}
 }
 
-std::string const DOTTED = "dotted ";
-
 double SongParser::parse_double(RememberingSubstring str) {
 	char* endptr = nullptr;
 	auto const ret = std::strtod(str.data.data(), &endptr);
