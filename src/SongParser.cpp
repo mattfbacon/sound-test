@@ -166,13 +166,17 @@ std::unique_ptr<Playable> SongParser::next() {
 		if (line.data.size() == 0 || line.data.starts_with("//")) {
 			return next();
 		}
+		if (line.data[0] == '%') {
+			parse_directive(line.substr(1));
+			return next();
+		}
 
 		// parse duration
 		tokenize_end = line.data.find_first_of(',', tokenize_start);
 		if (tokenize_end == std::string::npos || line.data.size() < tokenize_end + 2) {
 			throw SongParser::ParseException{ "Garbage line: ended before duration", line };
 		}
-		note_data.duration = parse_duration(line.substr(tokenize_start, tokenize_end));
+		note_data.duration = parse_duration(line.substr(tokenize_start, tokenize_end)) * (TEMPO_BASELINE / tempo);
 
 		// parse notes or rest
 		tokenize_start = tokenize_end + 2;  // skip space

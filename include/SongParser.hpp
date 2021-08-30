@@ -43,6 +43,7 @@ protected:
 		size_t line = 0;
 	} file_position;
 	std::ifstream input_file;
+	double tempo = 60.0;
 protected:
 	double parse_double(RememberingSubstring str) noexcept(false);
 	signed char parse_signed_char(RememberingSubstring str) noexcept(false);
@@ -51,4 +52,5 @@ protected:
 	void parse_pitches(RememberingSubstring str, std::vector<note_note_t>& pitches) noexcept(false);
 	note_note_t parse_pitch(RememberingSubstring str) noexcept(false);
 	Articulation parse_articulation(RememberingSubstring str) noexcept(false);
+	void parse_directive(RememberingSubstring str) noexcept(false);
 };

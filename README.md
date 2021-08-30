@@ -33,10 +33,11 @@ Additionally, for the Parser, I implemented a slightly smarter wrapper around su
 
 ### Explanation
 
-Each line consists of a duration, either "rest" or a series of notes, the latter optionally including an articulation and velocity. Sections are separated by commas. There are also comments. Some examples:
+Each line consists of a duration, either "rest" or a series of notes, the latter optionally including an articulation and velocity. Sections are separated by commas. There are also directives and comments. Some examples:
 
 ```c
-// comments also allowed (only on their own line)
+// first set the tempo with a tempo directive (bpm in 4/4)
+%tempo 80
 // whole note, c3
 whole, c3
 // whole note, c major chord
@@ -68,6 +69,7 @@ Some notes:
 - Comments are useful for measure numbers, song names, key signature, time signature, etc., as none of these exist natively in the format.
 - Staccato articulation plays for 80% of the duration, portamento (default) plays for 90%, tenuto plays for 95%, and slurred plays for 100%.
 - In general, "invalid" values are permitted, but behavior is undefined.
+- `%tempo` is currently the only directive.
 - The `.sng` extension is an abbreviation for song.
 
 For more examples, see the `music` directory.
@@ -87,12 +89,17 @@ SPACE ::= ' '
 REST ::= "rest"
 NEWLINE ::= '\n'
 COMMENT_START ::= "//"
+DIRECTIVE_START ::= '%'
 
 main ::= line NEWLINE | main line NEWLINE
 
-line ::= Empty | comment | duration COMMA SPACE REST | duration COMMA SPACE notespec
+line ::= Empty | comment | directive | duration COMMA SPACE REST | duration COMMA SPACE notespec
 
 comment ::= COMMENT_START /[^\n]*/
+
+directive ::= DIRECTIVE_START directive_content
+directive_content ::= tempo_directive
+tempo_directive ::= Prefix("tempo") SPACE RealNumber
 
 duration ::= RealNumber | named_duration
 named_duration ::= Prefix(named_duration_name) | Prefix("dotted") SPACE named_duration_name
