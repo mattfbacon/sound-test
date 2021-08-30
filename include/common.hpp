@@ -20,4 +20,7 @@ using note_octave_t = signed char;
 
 constexpr velocity_t DEFAULT_VELOCITY = 0.5;
 
-constexpr note_duration_t DURATION_FACTOR = 1.7 * ((note_duration_t)RATE / 8000);
+// 60 bpm in 4/4
+constexpr note_duration_t DURATION_FACTOR = 2.0 * ((note_duration_t)RATE / 8000);
+
+constexpr note_duration_t TEMPO_BASELINE = 60.0;
