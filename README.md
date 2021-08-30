@@ -33,7 +33,7 @@ Additionally, for the Parser, I implemented a slightly smarter wrapper around su
 
 ### Explanation
 
-Each line consists of a duration, either "rest" or a series of notes, the latter optionally including an articulation and velocity. Sections are separated by commas. Some examples:
+Each line consists of a duration, either "rest" or a series of notes, the latter optionally including an articulation and velocity. Sections are separated by commas. There are also comments. Some examples:
 
 ```c
 // comments also allowed (only on their own line)
@@ -86,10 +86,13 @@ COMMA ::= ','
 SPACE ::= ' '
 REST ::= "rest"
 NEWLINE ::= '\n'
+COMMENT_START ::= "//"
 
-main ::= Empty | line | main line
+main ::= line NEWLINE | main line NEWLINE
 
-line ::= duration COMMA SPACE REST NEWLINE | duration COMMA SPACE notespec NEWLINE
+line ::= Empty | comment | duration COMMA SPACE REST | duration COMMA SPACE notespec
+
+comment ::= COMMENT_START /[^\n]*/
 
 duration ::= RealNumber | named_duration
 named_duration ::= Prefix(named_duration_name) | Prefix("dotted") SPACE named_duration_name
